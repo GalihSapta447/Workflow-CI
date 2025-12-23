@@ -6,12 +6,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 
 def train():
-    # 1. Setup Tracking (Pastikan URI DagsHub benar jika ingin sinkron online)
-    # Jika hanya untuk Docker build di CI, MLflow akan simpan di folder 'mlruns' lokal runner
-    
+    # Gunakan autolog agar MLflow otomatis membuat folder 'model'
     mlflow.sklearn.autolog()
     
-    # Memastikan path dataset benar
+    # Path data yang aman untuk GitHub Actions
     data_file = "exam_score_preprocessed.csv"
     if not os.path.exists(data_file):
         data_file = os.path.join("MLProject", data_file)
@@ -22,16 +20,13 @@ def train():
     
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    # 2. Proses Training
-    # JANGAN gunakan nested=True di dalam mlflow run
-    with mlflow.start_run(run_name="Training_CI_Docker"):
+    # Mulai Run (tanpa URI DagsHub jika hanya ingin ke Docker)
+    with mlflow.start_run(run_name="Docker_Build_Run"):
         model = RandomForestRegressor(n_estimators=100)
         model.fit(X_train, y_train)
-        
-        # Evaluasi singkat untuk memicu autolog
+        # Memicu autolog mencatat evaluasi
         model.score(X_test, y_test)
-        
-        print("Training completed. Model saved to mlruns.")
+        print("Training selesai, model tersimpan di folder mlruns lokal runner.")
 
 if __name__ == "__main__":
     train()
