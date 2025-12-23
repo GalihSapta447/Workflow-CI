@@ -32,12 +32,19 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          cd MLProject
-          MODEL_PATH=$(find mlruns -name "model" -type d | head -n 1)
+          RUN_ID=$(ls -t mlruns/0 | grep -v "meta.yaml" | head -n 1)
+          echo "Run ID ditemukan: $RUN_ID"
+
+          DOCKER_USER=${{ secrets.DOCKERHUB_USERNAME }}
+          REPO_NAME="mlflow-model-galih"
+          IMAGE_TAG="$DOCKER_USER/$REPO_NAME:latest"
           
+          echo "Building image: $IMAGE_TAG"
+
           mlflow models build-docker \
-            -m "$MODEL_PATH" \
-            -n "${{ secrets.DOCKER_USERNAME }}/mlflow-galih:latest" \
-            --install-mlflow
-          
-          docker push ${{ secrets.DOCKER_USERNAME }}/mlflow-galih:latest
+            -m "runs:/$RUN_ID/model" \
+            -n "$IMAGE_TAG" \
+            --env-manager local
+
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "$DOCKER_USER" --password-stdin
+          docker push "$IMAGE_TAG"
