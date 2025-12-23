@@ -1,7 +1,7 @@
-name: exam_score_env
+name: model_env
 channels:
-  - defaults
   - conda-forge
+  - defaults
 dependencies:
   - python=3.9
   - pip
@@ -9,3 +9,4 @@ dependencies:
       - mlflow
       - pandas
       - scikit-learn
+      - cloudpickle
