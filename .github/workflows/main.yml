@@ -33,19 +33,25 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          # Cari lokasi folder model yang dihasilkan oleh autolog
-          MODEL_PATH=$(find mlruns -name "model" -type d | head -n 1)
-          echo "Model path ditemukan di: $MODEL_PATH"
-          
+          # 1. Pastikan library virtualenv tersedia (diperlukan oleh build-docker)
+          pip install virtualenv
+
+          # 2. Ambil Run ID terbaru dari folder mlruns
+          RUN_ID=$(ls -t mlruns/0 | grep -v "meta.yaml" | head -n 1)
+          echo "Run ID ditemukan: $RUN_ID"
+
+          # 3. Definisikan Tag Image
           DOCKER_USER=${{ secrets.DOCKERHUB_USERNAME }}
           REPO_NAME="mlflow-model-galih"
           IMAGE_TAG="$DOCKER_USER/$REPO_NAME:latest"
+          
+          echo "Building image: $IMAGE_TAG"
 
-          # Build Docker menggunakan path model yang ditemukan
+          # 4. Build Docker Image (Hapus --env-manager local)
           mlflow models build-docker \
-            -m "$MODEL_PATH" \
-            -n "$IMAGE_TAG" \
-            --env-manager local
+            -m "runs:/$RUN_ID/model" \
+            -n "$IMAGE_TAG"
 
-          # Push ke Docker Hub
+          # 5. Login dan Push ke Docker Hub
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "$DOCKER_USER" --password-stdin
           docker push "$IMAGE_TAG"
