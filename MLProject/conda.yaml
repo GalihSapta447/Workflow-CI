@@ -1,0 +1,11 @@
+name: exam_score_env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip
+  - pip:
+      - mlflow
+      - pandas
+      - scikit-learn
