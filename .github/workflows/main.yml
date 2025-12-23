@@ -32,6 +32,13 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          # Perintah Advance untuk build docker via mlflow
-          mlflow models build-docker -m "runs:/$(mlflow last-run --quiet)/model" -n "${{ secrets.DOCKERHUB_USERNAME }}/mlflow-model-galih:latest"
+          RUN_ID=$(mlflow runs list --experiment-id 0 --max-results 1 --output csv | head -n 2 | tail -n 1 | cut -d ',' -f 1)
+          
+          echo "Run ID yang ditemukan: $RUN_ID"
+
+          mlflow models build-docker \
+            -m "runs:/$RUN_ID/model" \
+            -n "${{ secrets.DOCKERHUB_USERNAME }}/mlflow-model-galih:latest" \
+            --env-manager local
+
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/mlflow-model-galih:latest
