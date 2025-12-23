@@ -1,7 +1,8 @@
-name: Exam_Score_Training
+name: Exam_Score_Project
 
 conda_env: conda.yaml
 
 entry_points:
   main:
+
     command: "python modelling.py"
