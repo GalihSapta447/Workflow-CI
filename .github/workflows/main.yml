@@ -1,15 +1,15 @@
-name: CI Workflow MLProject
+name: Push to Docker Hub
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build-and-train:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # Gunakan versi terbaru
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -18,40 +18,35 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install mlflow pandas scikit-learn dagshub
+          pip install mlflow pandas scikit-learn
 
-      - name: Run MLflow Project
+      - name: Run Training
         run: |
-          # Jalankan mlflow run di folder MLProject
-          mlflow run MLProject/ --env-manager local
+          # Jalankan training agar folder mlruns tercipta di runner
+          python MLProject/modelling.py
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v3 # Versi terbaru
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push Docker Image
+      - name: Build and Push Image
         run: |
-          # 1. Pastikan library virtualenv tersedia (diperlukan oleh build-docker)
-          pip install virtualenv
-
-          # 2. Ambil Run ID terbaru dari folder mlruns
-          RUN_ID=$(ls -t mlruns/0 | grep -v "meta.yaml" | head -n 1)
-          echo "Run ID ditemukan: $RUN_ID"
-
-          # 3. Definisikan Tag Image
-          DOCKER_USER=${{ secrets.DOCKERHUB_USERNAME }}
-          REPO_NAME="mlflow-model-galih"
-          IMAGE_TAG="$DOCKER_USER/$REPO_NAME:latest"
+          # Cari folder 'model' yang dihasilkan autolog secara otomatis
+          MODEL_PATH=$(find mlruns -name "model" -type d | head -n 1)
+          echo "Model ditemukan di: $MODEL_PATH"
           
-          echo "Building image: $IMAGE_TAG"
+          # Nama repo Docker HARUS huruf kecil semua (lowercase)
+          DOCKER_USER="${{ secrets.DOCKERHUB_USERNAME }}"
+          REPO_NAME="mlflow-model-titanic" 
+          IMAGE_TAG="$DOCKER_USER/$REPO_NAME:latest"
 
-          # 4. Build Docker Image (Hapus --env-manager local)
+          # Build Docker Image
           mlflow models build-docker \
-            -m "runs:/$RUN_ID/model" \
-            -n "$IMAGE_TAG"
+            -m "$MODEL_PATH" \
+            -n "$IMAGE_TAG" \
+            --install-mlflow
 
-          # 5. Login dan Push ke Docker Hub
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "$DOCKER_USER" --password-stdin
+          # Push ke Docker Hub
           docker push "$IMAGE_TAG"
