@@ -31,6 +31,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Run MLflow Training
+        run: |
+          cd MLProject
+          # Menggunakan SQLite agar tracking MLflow tersimpan secara lokal di runner
+          export MLFLOW_TRACKING_URI=sqlite:///mlflow.db
+          mlflow run . -P data_path=${{ env.DATA_PATH }} --env-manager local
+          
       - name: Build and Push Image
         run: |
           # Cari folder 'model' yang dihasilkan autolog secara otomatis
