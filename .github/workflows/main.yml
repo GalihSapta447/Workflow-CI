@@ -34,28 +34,27 @@ jobs:
       - name: Run MLflow Training
         run: |
           cd MLProject
-          # Menggunakan SQLite agar tracking MLflow tersimpan secara lokal di runner
+          # Menggunakan SQLite agar tracking tersimpan lokal di runner
           export MLFLOW_TRACKING_URI=sqlite:///mlflow.db
-          mlflow run . -P data_path=${{ env.DATA_PATH }} --env-manager local
+          # Menjalankan MLProject
+          mlflow run . --env-manager local
           
       - name: Build and Push Image
         run: |
-          # Cari folder 'model' yang dihasilkan autolog secara otomatis
-          MODEL_PATH=$(find mlruns -name "model" -type d | head -n 1)
+          # Cari folder 'model' di dalam folder MLProject/mlruns
+          MODEL_PATH=$(find MLProject/mlruns -name "model" -type d | head -n 1)
           echo "Model ditemukan di: $MODEL_PATH"
           
-          # Nama repo Docker HARUS huruf kecil semua (lowercase)
           DOCKER_USER="${{ secrets.DOCKERHUB_USERNAME }}"
           REPO_NAME="mlflow-model-galih12" 
           IMAGE_TAG="$DOCKER_USER/$REPO_NAME:latest"
 
-          # Build Docker Image
+          # Build Docker Image menggunakan folder model yang ditemukan
           mlflow models build-docker \
             -m "$MODEL_PATH" \
             -n "$IMAGE_TAG" \
             --install-mlflow
 
-          # Push ke Docker Hub
           docker push "$IMAGE_TAG"
 
       - name: Upload Training Artifact
