@@ -39,7 +39,7 @@ jobs:
           
           # Nama repo Docker HARUS huruf kecil semua (lowercase)
           DOCKER_USER="${{ secrets.DOCKERHUB_USERNAME }}"
-          REPO_NAME="mlflow-model-titanic" 
+          REPO_NAME="mlflow-model-galih12" 
           IMAGE_TAG="$DOCKER_USER/$REPO_NAME:latest"
 
           # Build Docker Image
