@@ -1,1 +1,1 @@
-
+https://hub.docker.com/repository/docker/galihsapta447/mlflow-model-galih12 
